@@ -4,6 +4,19 @@ version = "0.1.0"
 authors = ["jlgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+log = "0.4.8"
+packybara = {git= "https://github.com/jlgerber/packybara", tag="v0.32.0"}
+qt_thread_conductor = {git= "https://github.com/jlgerber/rust-qt-conductor", tag="v0.3.0"}
+rustqt-utils = {git="https://github.com/jlgerber/rustqt-utils", tag="v0.6.0"}
+crossbeam = "0.7.3"
+crossbeam-utils = "0.7.0"
+crossbeam-channel = "0.4.0"
+qt_core = "~0.4.1"
+qt_gui = "~0.4.1"
+qt_widgets = "~0.4.1"
+qt_ui_tools = "~0.4.1"
+pbgui-vpin = {git="https://github.com/jlgerber/pbgui-vpin", tag="v0.7.2"}
+
+[dev-dependencies]
+
