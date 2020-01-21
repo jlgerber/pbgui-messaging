@@ -1,4 +1,4 @@
-use packybara::packrat::{Client, NoTls};
+pub use packybara::packrat::{Client, NoTls};
 use std::fmt;
 
 /// ConnectParams provide connection parameters for the ClientProxy via
@@ -50,7 +50,7 @@ impl<'a> std::fmt::Display for ConnectParams<'a> {
 
 impl<'a> Default for ConnectParams<'a> {
     fn default() -> ConnectParams<'a> {
-        ConnectParams::new("127.0.0.1", "postgres", "packrat", "example", 5432)
+        ConnectParams::new("127.0.0.1", "postgres", "example", "packrat", 5432)
     }
 }
 
