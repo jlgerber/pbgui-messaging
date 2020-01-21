@@ -1,26 +1,16 @@
 //! handle queries in a separate thread
-use crate::{Event, IMsg, OMsg};
+use crate::{
+    client_proxy::{ClientProxy, ConnectParams},
+    Event, IMsg, OMsg,
+};
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_utils::thread;
 use packybara::packrat::PackratDb;
-use packybara::packrat::{Client, NoTls};
 use packybara::traits::*;
 use pbgui_vpin::vpin_dialog::LevelMap;
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow};
-
-pub struct ClientProxy {}
-
-impl ClientProxy {
-    pub fn connect() -> Result<Client, Box<dyn std::error::Error>> {
-        let client = Client::connect(
-            "host=127.0.0.1 user=postgres dbname=packrat password=example port=5432",
-            NoTls,
-        )?;
-        Ok(client)
-    }
-}
 
 /// Create the thread that handles requests for data from the ui. The thread
 /// receives messages via the `receiver`, matches against them, and sends data
@@ -38,6 +28,7 @@ impl ClientProxy {
 /// # Returns
 /// * i32 - The status
 pub fn create(
+    connect_params: ConnectParams,
     mut main_window: MutPtr<QMainWindow>,
     mut conductor: Conductor<Event>,
     sender: Sender<IMsg>,
@@ -46,16 +37,34 @@ pub fn create(
     let mut result = 0;
     thread::scope(|s| {
         let handle = s.spawn(|_| {
-            let client = ClientProxy::connect().expect("Unable to connect via ClientProxy");
+            let client = match ClientProxy::connect(connect_params) {
+                Ok(client) => client,
+                Err(err) => {
+                    sender
+                        .send(IMsg::Error(err.to_string()))
+                        .expect("unable to send roles");
+                    conductor.signal(Event::Error);
+                    panic!("unable to connect to database");
+                }
+            };
             let mut db = PackratDb::new(client);
             loop {
                 let msg = receiver.recv().expect("Unable to unwrap received msg");
                 match msg {
                     OMsg::GetRoles => {
-                        let roles = db
-                            .find_all_roles()
-                            .query()
-                            .expect("unable to get roles from db");
+                        let roles = match db.find_all_roles().query() {
+                            Ok(roles) => roles,
+                            Err(e) => {
+                                sender
+                                    .send(IMsg::Error(format!(
+                                        "Unable to get roles from db: {}",
+                                        e
+                                    )))
+                                    .expect("unable to send error msg");
+                                conductor.signal(Event::Error);
+                                continue;
+                            }
+                        };
                         let roles = roles
                             .into_iter()
                             .map(|mut x| std::mem::replace(&mut x.role, String::new()))
@@ -66,10 +75,20 @@ pub fn create(
                         conductor.signal(Event::UpdateRoles);
                     }
                     OMsg::GetSites => {
-                        let sites = db
-                            .find_all_sites()
-                            .query()
-                            .expect("unable to get sites from db");
+                        let sites = match db.find_all_sites().query() {
+                            Ok(sites) => sites,
+                            Err(e) => {
+                                sender
+                                    .send(IMsg::Error(format!(
+                                        "Unable to get sites from db: {}",
+                                        e
+                                    )))
+                                    .expect("unable to send error msg");
+                                conductor.signal(Event::Error);
+                                continue;
+                            }
+                        };
+                        //.expect("unable to get sites from db");
                         // we use std::mem::replace because this should be a bit more efficient
                         // than clone, and certainly more
                         let sites = sites
