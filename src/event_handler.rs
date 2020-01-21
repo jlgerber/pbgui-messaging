@@ -2,7 +2,6 @@ use crate::{prelude::*, Event, IMsg};
 use crossbeam_channel::Receiver;
 use log;
 use pbgui_vpin::vpin_dialog;
-//use pbgui_vpin::vpin_dialog::LevelMap;
 use qt_core::{QString, SlotOfQString};
 use qt_widgets::cpp_core::Ref;
 use std::rc::Rc;
