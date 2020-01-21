@@ -1,14 +1,10 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
 use packybara::packrat::{Client, NoTls};
-use pbgui_messaging::event::Event;
-use pbgui_messaging::thread as pbthread;
-use pbgui_messaging::{new_event_handler, IMsg, OMsg};
+use pbgui_messaging::{event::Event, new_event_handler, thread as pbthread, IMsg, OMsg};
 use pbgui_vpin::vpin_dialog;
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
-use qt_widgets::cpp_core::MutPtr;
-use qt_widgets::QApplication;
-use qt_widgets::{QMainWindow, QPushButton};
+use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow, QPushButton};
 use rustqt_utils::enclose;
 use std::rc::Rc;
 
@@ -25,7 +21,6 @@ impl ClientProxy {
 }
 
 fn main() {
-    //let mut handles = Vec::new();
     // sender, receiver for communicating from secondary thread to primary ui thread
     let (sender, receiver): (Sender<IMsg>, Receiver<IMsg>) = channel();
     // sender and receiver for communicating from ui thread to secondary thread
@@ -39,15 +34,12 @@ fn main() {
         let mut button = QPushButton::new();
         let button_ptr = button.as_mut_ptr();
         main.set_central_widget(button.into_ptr());
-        let quit_slot = Slot::new(move || {
-            to_thread_sender_quit
-                .send(OMsg::Quit)
-                .expect("couldn't send");
-        });
-        app.about_to_quit().connect(&quit_slot);
+        // wire up message to terminate secondary thread
+        let _quit_slot = pbthread::create_quit_slot(to_thread_sender_quit, app.clone());
 
         let dialog = Rc::new(create_dialog("DEV01", "modelpublish-1.2.0", main_ptr));
         init_dialog(to_thread_sender.clone());
+
         // we create a slot that is triggered when OK is pressed to act only in the event
         // that the user has requested action.
         let accepted_slot = Slot::new(enclose! { (dialog) move || {
