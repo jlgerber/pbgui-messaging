@@ -1,4 +1,5 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
+use env_logger::Env;
 use pbgui_messaging::{
     client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
     OVpinDialog,
@@ -11,6 +12,7 @@ use rustqt_utils::enclose;
 use std::rc::Rc;
 
 fn main() {
+    env_logger::from_env(Env::default().default_filter_or("info")).init();
     // sender, receiver for communicating from secondary thread to primary ui thread
     let (sender, receiver): (Sender<IMsg>, Receiver<IMsg>) = channel();
     // sender and receiver for communicating from ui thread to secondary thread

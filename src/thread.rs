@@ -5,6 +5,7 @@ use crate::{
 };
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_utils::thread;
+use log;
 use packybara::packrat::PackratDb;
 use packybara::traits::*;
 use pbgui_vpin::vpin_dialog::LevelMap;
@@ -184,7 +185,10 @@ pub fn create(
                         conductor.signal(VpinDialog::UpdateLevels.to_event());
                     }
 
-                    OMsg::Quit => return,
+                    OMsg::Quit => {
+                        log::info!("From secondary thread. Quitting after receiving OMsg::Quit");
+                        return;
+                    }
                 }
             }
         });
@@ -211,6 +215,7 @@ pub fn create(
 /// * the slot designed to terminate the secondary thread
 pub fn create_quit_slot<'a>(to_thread_sender: Sender<OMsg>, app: MutPtr<QApplication>) -> Slot<'a> {
     let quit_slot = Slot::new(move || {
+        log::info!("Sending secondary thread termination request ");
         to_thread_sender.send(OMsg::Quit).expect("couldn't send");
     });
     unsafe {
