@@ -21,11 +21,26 @@ impl ClientProxy {
     }
 }
 
+/// Create the thread that handles requests for data from the ui. The thread
+/// receives messages via the `receiver`, matches against them, and sends data
+/// back to the UI via the `sender`. Finally, triggering an appropriate update
+/// via the `conductor`. The `conductor` and `sender` work as a team. The `sender`
+/// handles complex data, and the `conductor` notifies QT.
+///
+/// # Arguments
+/// * `main_window` - Mutable MutPtr wrapped QMainWindow instance
+/// * `conductor` - Mutable instance of the Conductor<Event>, responsible for signaling
+///                 to QT
+/// * sender - Sends IMsg's to the UI thread
+/// * receiver - Receives OMsg's from the UI thread
+///
+/// # Returns
+/// * i32 - The status
 pub fn create(
-    mut main_ptr: MutPtr<QMainWindow>,
-    mut my_conductor: Conductor<Event>,
+    mut main_window: MutPtr<QMainWindow>,
+    mut conductor: Conductor<Event>,
     sender: Sender<IMsg>,
-    to_thread_receiver: Receiver<OMsg>,
+    receiver: Receiver<OMsg>,
 ) -> i32 {
     let mut result = 0;
     thread::scope(|s| {
@@ -33,9 +48,7 @@ pub fn create(
             let client = ClientProxy::connect().expect("Unable to connect via ClientProxy");
             let mut db = PackratDb::new(client);
             loop {
-                let msg = to_thread_receiver
-                    .recv()
-                    .expect("Unable to unwrap received msg");
+                let msg = receiver.recv().expect("Unable to unwrap received msg");
                 match msg {
                     OMsg::GetRoles => {
                         let roles = db
@@ -49,7 +62,7 @@ pub fn create(
                         sender
                             .send(IMsg::Roles(roles))
                             .expect("unable to send roles");
-                        my_conductor.signal(Event::UpdateRoles);
+                        conductor.signal(Event::UpdateRoles);
                     }
                     OMsg::GetSites => {
                         let sites = db
@@ -65,13 +78,13 @@ pub fn create(
                         sender
                             .send(IMsg::Sites(sites))
                             .expect("unable to send sites");
-                        my_conductor.signal(Event::UpdateSites);
+                        conductor.signal(Event::UpdateSites);
                     }
                     OMsg::GetLevels => {
                         sender
                             .send(IMsg::Levels(initialize_levelmap()))
                             .expect("Unable to send levelmap");
-                        my_conductor.signal(Event::UpdateLevels);
+                        conductor.signal(Event::UpdateLevels);
                     }
                     OMsg::Quit => return,
                 }
@@ -80,7 +93,7 @@ pub fn create(
         // the application needs to show and execute before the thread handle is joined
         // so that the scope lives longer than the application
         unsafe {
-            main_ptr.show();
+            main_window.show();
             result = QApplication::exec();
         }
         let _res = handle.join().expect("problem joining scoped thread handle");
