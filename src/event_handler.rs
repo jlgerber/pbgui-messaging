@@ -7,8 +7,15 @@ use qt_core::{QString, SlotOfQString};
 use qt_widgets::cpp_core::Ref;
 use std::rc::Rc;
 
-/// Generate a new signal handler, which is of type `SlotOfQString`.
-/// The signal handler is responsible for handling Signals of type Event
+/// Generate a new event handler, which is of type `SlotOfQString`.
+/// The event handler is responsible for handling Signals of type Event
+///
+/// # Arguments
+/// * `dialog` - Rc wrapped VpinDialog
+/// * `receiver` - The Receiver of messages from the non-ui thread
+///
+/// # Returns
+/// * Slot which processes messages from the non-ui thread and updates the ui in response
 pub fn new_event_handler<'a>(
     dialog: Rc<vpin_dialog::VpinDialog<'a>>,
     receiver: Receiver<IMsg>,
