@@ -1,7 +1,7 @@
 //! handle queries in a separate thread
 use crate::{
     client_proxy::{ClientProxy, ConnectParams},
-    Event, IMsg, OMsg,
+    Event, IMsg, OMsg, ToEvent, VpinDialog,
 };
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_utils::thread;
@@ -72,7 +72,7 @@ pub fn create(
                         sender
                             .send(IMsg::Roles(roles))
                             .expect("unable to send roles");
-                        conductor.signal(Event::UpdateRoles);
+                        conductor.signal(VpinDialog::UpdateRoles.to_event());
                     }
 
                     OMsg::GetSites => {
@@ -99,7 +99,7 @@ pub fn create(
                         sender
                             .send(IMsg::Sites(sites))
                             .expect("unable to send sites");
-                        conductor.signal(Event::UpdateSites);
+                        conductor.signal(VpinDialog::UpdateSites.to_event());
                     }
 
                     OMsg::GetLevels(ref show) => {
@@ -136,7 +136,7 @@ pub fn create(
                             sender
                                 .send(IMsg::Levels(level_map))
                                 .expect("Unable to send levelmap");
-                            conductor.signal(Event::UpdateLevels);
+                            conductor.signal(VpinDialog::UpdateLevels.to_event());
                             continue;
                         }
                         // Now we get rid of the show name
@@ -181,7 +181,7 @@ pub fn create(
                         sender
                             .send(IMsg::Levels(level_map))
                             .expect("Unable to send levelmap");
-                        conductor.signal(Event::UpdateLevels);
+                        conductor.signal(VpinDialog::UpdateLevels.to_event());
                     }
 
                     OMsg::Quit => return,

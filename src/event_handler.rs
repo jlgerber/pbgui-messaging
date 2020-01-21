@@ -1,4 +1,4 @@
-use crate::{prelude::*, Event, IMsg};
+use crate::{prelude::*, Event, IMsg, VpinDialog};
 use crossbeam_channel::Receiver;
 use log;
 use pbgui_vpin::vpin_dialog;
@@ -20,7 +20,7 @@ pub fn new_event_handler<'a>(
     receiver: Receiver<IMsg>,
 ) -> SlotOfQString<'a> {
     SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
-        Event::UpdateSites => {
+        Event::VpinDialog(VpinDialog::UpdateSites) => {
             if let Ok(IMsg::Sites(sites)) = receiver.recv() {
                 println!("populating sites");
                 let sites_ref = sites.iter().map(|x| x.as_str()).collect::<Vec<_>>();
@@ -29,7 +29,7 @@ pub fn new_event_handler<'a>(
                 log::error!("Event::UpdateSites IMsg does not match event state");
             }
         }
-        Event::UpdateRoles => {
+        Event::VpinDialog(VpinDialog::UpdateRoles) => {
             if let Ok(IMsg::Roles(roles)) = receiver.recv() {
                 let roles_ref = roles.iter().map(|x| x.as_str()).collect::<Vec<_>>();
                 dialog.set_roles(roles_ref);
@@ -37,7 +37,7 @@ pub fn new_event_handler<'a>(
                 log::error!("IMsg does not have Roles")
             }
         }
-        Event::UpdateLevels => {
+        Event::VpinDialog(VpinDialog::UpdateLevels) => {
             if let Ok(IMsg::Levels(level_map)) = receiver.recv() {
                 dialog.set_levels(level_map);
             } else {

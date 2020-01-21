@@ -3,7 +3,7 @@ pub use incoming::IMsg;
 pub mod outgoing;
 pub use outgoing::OMsg;
 pub mod event;
-pub use event::Event;
+pub use event::{Event, ToEvent, VpinDialog};
 pub mod event_handler;
 pub use event_handler::new_event_handler;
 pub mod client_proxy;

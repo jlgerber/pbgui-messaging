@@ -8,50 +8,81 @@ use qt_thread_conductor::traits::*;
 use qt_widgets::cpp_core::{CppBox, Ref};
 
 #[derive(Debug, PartialEq)]
-pub enum Event {
+pub enum VpinDialog {
     UpdateRoles,
     UpdateSites,
     UpdateLevels,
-    Error,
 }
 
+pub trait ToEvent {
+    fn to_event(self) -> Event;
+}
+
+impl ToEvent for VpinDialog {
+    fn to_event(self) -> Event {
+        Event::VpinDialog(self)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Event {
+    VpinDialog(VpinDialog),
+    Error,
+}
 /*
 In order to scale, I want to do something like this:
 
-pub enum Vpin {
+pub enum VpinDialog {
     UpdateRoles,
     UpdateSites,
     UpdateLevels
 }
 pub enum Event {
-    Vpin(Vpin)
+    VpinDialog(VpinDialog)
 }
 
 impl ToQString for Event {
     match & self {
-        &Event::Vpin(Vpin::UpdateRoles) => QString::from_std::str("Vpin::UpdateRoles"),
-        &Event::Vpin(Vpin::UpdateSites) => QString::from_std::str("Vpin::UpdateSites"),
-        &Event::Vpin(Vpin::UpdateLevels) => QString::from_std::str("Vpin::UpdateLevels"),
+        &Event::VpinDialog(VpinDialog::UpdateRoles) => QString::from_std_str("VpinDialog::UpdateRoles"),
+        &Event::VpinDialog(VpinDialog::UpdateSites) => QString::from_std_str("VpinDialog::UpdateSites"),
+        &Event::VpinDialog(VpinDialog::UpdateLevels) => QString::from_std_str("VpinDialog::UpdateLevels"),
     }
 }
 
 impl FromQString for Event {
     fn from_qstring(qs: Ref<QString>) -> Self {
         match qs.to_std_string().as_str() {
-            "Vpin::UpdateRoles" => Event::Vpin(Vpin::UpdateRoles),
-            "Vpin::UpdateSites" => Event::Vpin(Vpin::UpdateSites),
-            "Vpin::UpdateLevels" => Event::Vpin(Vpin::UpdateLevels),
+            "VpinDialog::UpdateRoles" => Event::VpinDialog(VpinDialog::UpdateRoles),
+            "VpinDialog::UpdateSites" => Event::VpinDialog(VpinDialog::UpdateSites),
+            "VpinDialog::UpdateLevels" => Event::VpinDialog(VpinDialog::UpdateLevels),
             _ => panic!("Unable to convert to Event"),
         }
     }
 }
 */
+
+impl ToQString for VpinDialog {
+    fn to_qstring(&self) -> CppBox<QString> {
+        match &self {
+            &VpinDialog::UpdateRoles => QString::from_std_str("VpinDialog::UpdateRoles"),
+            &VpinDialog::UpdateSites => QString::from_std_str("VpinDialog::UpdateSites"),
+            &VpinDialog::UpdateLevels => QString::from_std_str("VpinDialog::UpdateLevels"),
+        }
+    }
+}
+
 impl ToQString for Event {
     fn to_qstring(&self) -> CppBox<QString> {
         match &self {
-            &Event::UpdateRoles => QString::from_std_str("UpdateRoles"),
-            &Event::UpdateSites => QString::from_std_str("UpdateSites"),
-            &Event::UpdateLevels => QString::from_std_str("UpdateLevels"),
+            &Event::VpinDialog(VpinDialog::UpdateRoles) => {
+                QString::from_std_str("VpinDialog::UpdateRoles")
+            }
+            &Event::VpinDialog(VpinDialog::UpdateSites) => {
+                QString::from_std_str("VpinDialog::UpdateSites")
+            }
+            &Event::VpinDialog(VpinDialog::UpdateLevels) => {
+                QString::from_std_str("VpinDialog::UpdateLevels")
+            }
             &Event::Error => QString::from_std_str("Error"),
         }
     }
@@ -60,9 +91,9 @@ impl ToQString for Event {
 impl FromQString for Event {
     fn from_qstring(qs: Ref<QString>) -> Self {
         match qs.to_std_string().as_str() {
-            "UpdateRoles" => Event::UpdateRoles,
-            "UpdateSites" => Event::UpdateSites,
-            "UpdateLevels" => Event::UpdateLevels,
+            "VpinDialog::UpdateRoles" => Event::VpinDialog(VpinDialog::UpdateRoles),
+            "VpinDialog::UpdateSites" => Event::VpinDialog(VpinDialog::UpdateSites),
+            "VpinDialog::UpdateLevels" => Event::VpinDialog(VpinDialog::UpdateLevels),
             "Error" => Event::Error,
             _ => panic!("Unable to convert to Event"),
         }
