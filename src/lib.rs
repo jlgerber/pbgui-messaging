@@ -10,5 +10,6 @@ pub mod client_proxy;
 pub mod thread;
 
 pub mod prelude {
+    pub use super::event::ToEvent;
     pub use qt_thread_conductor::traits::*;
 }
