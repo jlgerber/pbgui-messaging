@@ -92,6 +92,6 @@ fn init_dialog(to_thread_sender: Sender<OMsg>) {
         .send(OMsg::GetSites)
         .expect("unable to get sites");
     to_thread_sender
-        .send(OMsg::GetLevels)
+        .send(OMsg::GetLevels("dev02".to_string()))
         .expect("unable to get levels");
 }

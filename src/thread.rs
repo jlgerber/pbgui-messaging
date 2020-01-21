@@ -54,11 +54,11 @@ pub fn create(
                     OMsg::GetRoles => {
                         let roles = match db.find_all_roles().query() {
                             Ok(roles) => roles,
-                            Err(e) => {
+                            Err(err) => {
                                 sender
                                     .send(IMsg::Error(format!(
                                         "Unable to get roles from db: {}",
-                                        e
+                                        err
                                     )))
                                     .expect("unable to send error msg");
                                 conductor.signal(Event::Error);
@@ -74,6 +74,7 @@ pub fn create(
                             .expect("unable to send roles");
                         conductor.signal(Event::UpdateRoles);
                     }
+
                     OMsg::GetSites => {
                         let sites = match db.find_all_sites().query() {
                             Ok(sites) => sites,
@@ -100,12 +101,89 @@ pub fn create(
                             .expect("unable to send sites");
                         conductor.signal(Event::UpdateSites);
                     }
-                    OMsg::GetLevels => {
+
+                    OMsg::GetLevels(ref show) => {
+                        /*
+                        Rhe query will return a result like this:
+                        -------------
+                        foo
+                        foo.aa
+                        foo.aa.0001
+                        foo.aa.0002
+                        foo.rd
+                        foo.rd.0001
+                        foo.rd.9999
+                        ...
+                        -------------
+                        */
+                        let levels = match db.find_all_levels().show(show).query() {
+                            Ok(levels) => levels,
+                            Err(e) => {
+                                sender
+                                    .send(IMsg::Error(format!(
+                                        "Unable to get levels from db for {}: {}",
+                                        show, e
+                                    )))
+                                    .expect("unable to send error msg");
+                                conductor.signal(Event::Error);
+                                continue;
+                            }
+                        };
+                        let mut level_map = LevelMap::new();
+                        // If we dont have any sequences or shots, then only the show will be returned.
+                        // The length of the returned vec will be 1. We can return an empty map and continue.
+                        if levels.len() == 1 {
+                            sender
+                                .send(IMsg::Levels(level_map))
+                                .expect("Unable to send levelmap");
+                            conductor.signal(Event::UpdateLevels);
+                            continue;
+                        }
+                        // Now we get rid of the show name
+                        let levels = &levels[1..];
+                        // initialize a blank key (sequence)
+                        let mut key = "".to_string();
+                        // and an empty vec for shots
+                        let mut shots: Vec<String> = Vec::new();
+                        for level in levels {
+                            let pieces = level.level.split(".").collect::<Vec<_>>();
+                            let pieces_len = pieces.len();
+                            // if we have two pieces, they are show and sequence.
+                            if pieces_len == 2 {
+                                // if the key is blank, then we have only just begun
+                                if &key == "" {
+                                    key = pieces[1].to_string();
+                                } else {
+                                    // we must have a previous sequence. It is time to insert
+                                    // whatever sequence and shots we have collected thus far, and
+                                    // set them up for the new sequence
+                                    let old_shots = std::mem::replace(&mut shots, Vec::new());
+                                    level_map.insert(key.clone(), old_shots);
+                                    // and the new sequence is in the second spot in the vector
+                                    key = pieces[1].to_string();
+                                }
+                            // we are in a shot
+                            } else if pieces_len == 3 {
+                                shots.push(pieces[2].to_string());
+                            } else {
+                                // if we are not in a show sequence or shot then what is going on?
+                                panic!("Incorrect number of pieces from get_all_levels");
+                            }
+                        }
+                        // we need to account for the last sequence and potential shots
+                        // as they will never get inserted in the previous loop
+                        // Of course, there is always the possiblity that we have no sequences
+                        // or shots. So we guard against that.
+                        if &key != "" {
+                            level_map.insert(key, shots);
+                        }
+                        // now lets send our work
                         sender
-                            .send(IMsg::Levels(initialize_levelmap()))
+                            .send(IMsg::Levels(level_map))
                             .expect("Unable to send levelmap");
                         conductor.signal(Event::UpdateLevels);
                     }
+
                     OMsg::Quit => return,
                 }
             }
@@ -139,27 +217,4 @@ pub fn create_quit_slot<'a>(to_thread_sender: Sender<OMsg>, app: MutPtr<QApplica
         app.about_to_quit().connect(&quit_slot);
     }
     quit_slot
-}
-
-fn initialize_levelmap() -> LevelMap {
-    let mut lm = LevelMap::new();
-    lm.insert(
-        "RD".to_string(),
-        vec![
-            "0001".to_string(),
-            "0002".to_string(),
-            "0003".to_string(),
-            "9999".to_string(),
-        ],
-    );
-    lm.insert(
-        "AA".to_string(),
-        vec![
-            "0001".to_string(),
-            "0002".to_string(),
-            "0003".to_string(),
-            "0004".to_string(),
-        ],
-    );
-    lm
 }
