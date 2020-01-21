@@ -1,6 +1,7 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
 use pbgui_messaging::{
     client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
+    OVpinDialog,
 };
 use pbgui_vpin::vpin_dialog;
 use qt_core::Slot;
@@ -86,12 +87,14 @@ unsafe fn create_dialog<'a, I: Into<String>>(
 }
 fn init_dialog(to_thread_sender: Sender<OMsg>) {
     to_thread_sender
-        .send(OMsg::GetRoles)
+        .send(OMsg::VpinDialog(OVpinDialog::GetRoles))
         .expect("unable to get roles");
     to_thread_sender
-        .send(OMsg::GetSites)
+        .send(OMsg::VpinDialog(OVpinDialog::GetSites))
         .expect("unable to get sites");
     to_thread_sender
-        .send(OMsg::GetLevels("dev02".to_string()))
+        .send(OMsg::VpinDialog(OVpinDialog::GetLevels(
+            "dev02".to_string(),
+        )))
         .expect("unable to get levels");
 }

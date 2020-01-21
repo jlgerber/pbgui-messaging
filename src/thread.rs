@@ -1,7 +1,7 @@
 //! handle queries in a separate thread
 use crate::{
     client_proxy::{ClientProxy, ConnectParams},
-    Event, IMsg, OMsg, ToEvent, VpinDialog,
+    Event, IMsg, OMsg, OVpinDialog, ToEvent, VpinDialog,
 };
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_utils::thread;
@@ -51,7 +51,7 @@ pub fn create(
             loop {
                 let msg = receiver.recv().expect("Unable to unwrap received msg");
                 match msg {
-                    OMsg::GetRoles => {
+                    OMsg::VpinDialog(OVpinDialog::GetRoles) => {
                         let roles = match db.find_all_roles().query() {
                             Ok(roles) => roles,
                             Err(err) => {
@@ -75,7 +75,7 @@ pub fn create(
                         conductor.signal(VpinDialog::UpdateRoles.to_event());
                     }
 
-                    OMsg::GetSites => {
+                    OMsg::VpinDialog(OVpinDialog::GetSites) => {
                         let sites = match db.find_all_sites().query() {
                             Ok(sites) => sites,
                             Err(e) => {
@@ -102,7 +102,7 @@ pub fn create(
                         conductor.signal(VpinDialog::UpdateSites.to_event());
                     }
 
-                    OMsg::GetLevels(ref show) => {
+                    OMsg::VpinDialog(OVpinDialog::GetLevels(ref show)) => {
                         /*
                         Rhe query will return a result like this:
                         -------------
