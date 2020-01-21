@@ -1,12 +1,9 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
-use crossbeam_utils::thread;
-use packybara::packrat::PackratDb;
 use packybara::packrat::{Client, NoTls};
-use packybara::traits::*;
 use pbgui_messaging::event::Event;
+use pbgui_messaging::thread as pbthread;
 use pbgui_messaging::{new_event_handler, IMsg, OMsg};
 use pbgui_vpin::vpin_dialog;
-use pbgui_vpin::vpin_dialog::LevelMap;
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::cpp_core::MutPtr;
@@ -38,7 +35,7 @@ fn main() {
 
     QApplication::init(|app| unsafe {
         let mut main = QMainWindow::new_0a();
-        let mut main_ptr = main.as_mut_ptr();
+        let main_ptr = main.as_mut_ptr();
         let mut button = QPushButton::new();
         let button_ptr = button.as_mut_ptr();
         main.set_central_widget(button.into_ptr());
@@ -86,67 +83,8 @@ fn main() {
         // This Slot handles processessing incoming Events and Messages
         //
         let app_update = new_event_handler(dialog.clone(), receiver);
-        let mut my_conductor = Conductor::<Event>::new(&app_update);
-        let mut result = 0;
-        // we use a scoped channel so that we can avoid needing 'static lifetimes on our
-        // message components. This reduces the number of allocations we need to make.
-        thread::scope(|s| {
-            let handle = s.spawn(|_| {
-                let client = ClientProxy::connect().expect("Unable to connect via ClientProxy");
-                let mut db = PackratDb::new(client);
-                loop {
-                    let msg = to_thread_receiver
-                        .recv()
-                        .expect("Unable to unwrap received msg");
-                    match msg {
-                        OMsg::GetRoles => {
-                            let roles = db
-                                .find_all_roles()
-                                .query()
-                                .expect("unable to get roles from db");
-                            let roles = roles
-                                .into_iter()
-                                .map(|mut x| std::mem::replace(&mut x.role, String::new()))
-                                .collect::<Vec<_>>();
-                            sender
-                                .send(IMsg::Roles(roles))
-                                .expect("unable to send roles");
-                            my_conductor.signal(Event::UpdateRoles);
-                        }
-                        OMsg::GetSites => {
-                            let sites = db
-                                .find_all_sites()
-                                .query()
-                                .expect("unable to get sites from db");
-                            // we use std::mem::replace because this should be a bit more efficient
-                            // than clone, and certainly more
-                            let sites = sites
-                                .into_iter()
-                                .map(|mut x| std::mem::replace(&mut x.name, String::new()))
-                                .collect::<Vec<_>>();
-                            sender
-                                .send(IMsg::Sites(sites))
-                                .expect("unable to send sites");
-                            my_conductor.signal(Event::UpdateSites);
-                        }
-                        OMsg::GetLevels => {
-                            sender
-                                .send(IMsg::Levels(initialize_levelmap()))
-                                .expect("Unable to send levelmap");
-                            my_conductor.signal(Event::UpdateLevels);
-                        }
-                        OMsg::Quit => return,
-                    }
-                }
-            });
-            // the application needs to show and execute before the thread handle is joined
-            // so that the scope lives longer than the application
-            main_ptr.show();
-            result = QApplication::exec();
-            let _res = handle.join().expect("problem joining scoped thread handle");
-        })
-        .expect("problem with scoped channel");
-        result
+        let my_conductor = Conductor::<Event>::new(&app_update);
+        pbthread::create(main_ptr, my_conductor, sender, to_thread_receiver)
     })
 }
 
@@ -169,27 +107,4 @@ fn init_dialog(to_thread_sender: Sender<OMsg>) {
     to_thread_sender
         .send(OMsg::GetLevels)
         .expect("unable to get levels");
-}
-
-fn initialize_levelmap() -> LevelMap {
-    let mut lm = LevelMap::new();
-    lm.insert(
-        "RD".to_string(),
-        vec![
-            "0001".to_string(),
-            "0002".to_string(),
-            "0003".to_string(),
-            "9999".to_string(),
-        ],
-    );
-    lm.insert(
-        "AA".to_string(),
-        vec![
-            "0001".to_string(),
-            "0002".to_string(),
-            "0003".to_string(),
-            "0004".to_string(),
-        ],
-    );
-    lm
 }
