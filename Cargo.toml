@@ -1,6 +1,6 @@
 [package]
 name = "pbgui-messaging"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["jlgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
@@ -16,7 +16,7 @@ qt_core = "~0.4.1"
 qt_gui = "~0.4.1"
 qt_widgets = "~0.4.1"
 qt_ui_tools = "~0.4.1"
-pbgui-vpin = {git="https://github.com/jlgerber/pbgui-vpin", tag="v0.7.2"}
+pbgui-vpin = {git="https://github.com/jlgerber/pbgui-vpin", tag="v0.7.3"}
 
 [dev-dependencies]
 
