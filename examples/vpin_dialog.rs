@@ -1,6 +1,8 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
 use crossbeam_utils::thread;
-
+use packybara::packrat::PackratDb;
+use packybara::packrat::{Client, NoTls};
+use packybara::traits::*;
 use pbgui_messaging::event::Event;
 use pbgui_messaging::{new_event_handler, IMsg, OMsg};
 use pbgui_vpin::vpin_dialog;
@@ -12,6 +14,18 @@ use qt_widgets::QApplication;
 use qt_widgets::{QMainWindow, QPushButton};
 use rustqt_utils::enclose;
 use std::rc::Rc;
+
+pub struct ClientProxy {}
+
+impl ClientProxy {
+    pub fn connect() -> Result<Client, Box<dyn std::error::Error>> {
+        let client = Client::connect(
+            "host=127.0.0.1 user=postgres dbname=packrat password=example port=5432",
+            NoTls,
+        )?;
+        Ok(client)
+    }
+}
 
 fn main() {
     //let mut handles = Vec::new();
@@ -77,37 +91,52 @@ fn main() {
         // we use a scoped channel so that we can avoid needing 'static lifetimes on our
         // message components. This reduces the number of allocations we need to make.
         thread::scope(|s| {
-            let handle = s.spawn(|_| loop {
-                let msg = to_thread_receiver
-                    .recv()
-                    .expect("Unable to unwrap received msg");
-                match msg {
-                    OMsg::GetRoles => {
-                        sender
-                            .send(IMsg::Roles(vec![
-                                "anim", "integ", "model", "fx", "cfx", "light", "comp", "roto",
-                            ]))
-                            .expect("unable to send roles");
-                        my_conductor.signal(Event::UpdateRoles);
+            let handle = s.spawn(|_| {
+                let client = ClientProxy::connect().expect("Unable to connect via ClientProxy");
+                let mut db = PackratDb::new(client);
+                loop {
+                    let msg = to_thread_receiver
+                        .recv()
+                        .expect("Unable to unwrap received msg");
+                    match msg {
+                        OMsg::GetRoles => {
+                            let roles = db
+                                .find_all_roles()
+                                .query()
+                                .expect("unable to get roles from db");
+                            let roles = roles
+                                .into_iter()
+                                .map(|mut x| std::mem::replace(&mut x.role, String::new()))
+                                .collect::<Vec<_>>();
+                            sender
+                                .send(IMsg::Roles(roles))
+                                .expect("unable to send roles");
+                            my_conductor.signal(Event::UpdateRoles);
+                        }
+                        OMsg::GetSites => {
+                            let sites = db
+                                .find_all_sites()
+                                .query()
+                                .expect("unable to get sites from db");
+                            // we use std::mem::replace because this should be a bit more efficient
+                            // than clone, and certainly more
+                            let sites = sites
+                                .into_iter()
+                                .map(|mut x| std::mem::replace(&mut x.name, String::new()))
+                                .collect::<Vec<_>>();
+                            sender
+                                .send(IMsg::Sites(sites))
+                                .expect("unable to send sites");
+                            my_conductor.signal(Event::UpdateSites);
+                        }
+                        OMsg::GetLevels => {
+                            sender
+                                .send(IMsg::Levels(initialize_levelmap()))
+                                .expect("Unable to send levelmap");
+                            my_conductor.signal(Event::UpdateLevels);
+                        }
+                        OMsg::Quit => return,
                     }
-                    OMsg::GetSites => {
-                        sender
-                            .send(IMsg::Sites(vec![
-                                "hyderabad",
-                                "montreal",
-                                "playa",
-                                "vancouver",
-                            ]))
-                            .expect("unable to send sites");
-                        my_conductor.signal(Event::UpdateSites);
-                    }
-                    OMsg::GetLevels => {
-                        sender
-                            .send(IMsg::Levels(initialize_levelmap()))
-                            .expect("Unable to send levelmap");
-                        my_conductor.signal(Event::UpdateLevels);
-                    }
-                    OMsg::Quit => return,
                 }
             });
             // the application needs to show and execute before the thread handle is joined
