@@ -6,6 +6,7 @@ use packybara::packrat::PackratDb;
 use packybara::packrat::{Client, NoTls};
 use packybara::traits::*;
 use pbgui_vpin::vpin_dialog::LevelMap;
+use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow};
 
@@ -100,6 +101,25 @@ pub fn create(
     })
     .expect("problem with scoped channel");
     result
+}
+/// Create the slot that handles terminating the secondary thread when
+/// the application is about to quit. This function will also wire up
+/// the appropriate signal & slot to handle this.
+///
+/// # Arguments
+/// * `to_thread_sender` - the sender responsible for signaling the secondary thread.
+/// * `app` - A MutPtr to the QApplication instance.
+///
+/// # Returns
+/// * the slot designed to terminate the secondary thread
+pub fn create_quit_slot<'a>(to_thread_sender: Sender<OMsg>, app: MutPtr<QApplication>) -> Slot<'a> {
+    let quit_slot = Slot::new(move || {
+        to_thread_sender.send(OMsg::Quit).expect("couldn't send");
+    });
+    unsafe {
+        app.about_to_quit().connect(&quit_slot);
+    }
+    quit_slot
 }
 
 fn initialize_levelmap() -> LevelMap {
