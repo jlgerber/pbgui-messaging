@@ -1,7 +1,7 @@
 //! handle queries in a separate thread
 use crate::{
     client_proxy::{ClientProxy, ConnectParams},
-    Event, IMsg, OMsg, OVpinDialog, ToEvent, VpinDialog,
+    Event, IMsg, IVpinDialog, OMsg, OVpinDialog, ToEvent, ToIMsg, VpinDialog,
 };
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_utils::thread;
@@ -70,7 +70,7 @@ pub fn create(
                             .map(|mut x| std::mem::replace(&mut x.role, String::new()))
                             .collect::<Vec<_>>();
                         sender
-                            .send(IMsg::Roles(roles))
+                            .send(IVpinDialog::Roles(roles).to_imsg())
                             .expect("unable to send roles");
                         conductor.signal(VpinDialog::UpdateRoles.to_event());
                     }
@@ -97,7 +97,7 @@ pub fn create(
                             .map(|mut x| std::mem::replace(&mut x.name, String::new()))
                             .collect::<Vec<_>>();
                         sender
-                            .send(IMsg::Sites(sites))
+                            .send(IVpinDialog::Sites(sites).to_imsg())
                             .expect("unable to send sites");
                         conductor.signal(VpinDialog::UpdateSites.to_event());
                     }
@@ -134,7 +134,7 @@ pub fn create(
                         // The length of the returned vec will be 1. We can return an empty map and continue.
                         if levels.len() == 1 {
                             sender
-                                .send(IMsg::Levels(level_map))
+                                .send(IVpinDialog::Levels(level_map).to_imsg())
                                 .expect("Unable to send levelmap");
                             conductor.signal(VpinDialog::UpdateLevels.to_event());
                             continue;
@@ -179,7 +179,7 @@ pub fn create(
                         }
                         // now lets send our work
                         sender
-                            .send(IMsg::Levels(level_map))
+                            .send(IVpinDialog::Levels(level_map).to_imsg())
                             .expect("Unable to send levelmap");
                         conductor.signal(VpinDialog::UpdateLevels.to_event());
                     }

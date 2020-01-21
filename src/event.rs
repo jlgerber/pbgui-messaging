@@ -13,7 +13,7 @@ pub enum VpinDialog {
     UpdateSites,
     UpdateLevels,
 }
-
+/// ergonomics related trait. Convert a nested enum to an event
 pub trait ToEvent {
     fn to_event(self) -> Event;
 }
