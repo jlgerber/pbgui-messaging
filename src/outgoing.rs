@@ -1,4 +1,6 @@
 //! models message being sent from the application to the secondary thread
+pub mod ovpin_dialog;
+pub use ovpin_dialog::OVpinDialog;
 
 pub trait ToOMsg {
     fn to_omsg(self) -> OMsg;
@@ -8,17 +10,4 @@ pub trait ToOMsg {
 pub enum OMsg {
     VpinDialog(OVpinDialog),
     Quit,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum OVpinDialog {
-    GetSites,
-    GetRoles,
-    GetLevels(String),
-}
-
-impl ToOMsg for OVpinDialog {
-    fn to_omsg(self) -> OMsg {
-        OMsg::VpinDialog(self)
-    }
 }
