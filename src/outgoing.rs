@@ -3,6 +3,6 @@
 pub enum OMsg {
     GetSites,
     GetRoles,
-    GetLevels,
+    GetLevels(String),
     Quit,
 }
