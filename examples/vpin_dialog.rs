@@ -1,24 +1,13 @@
 use crossbeam_channel::{unbounded as channel, Receiver, Sender};
-use packybara::packrat::{Client, NoTls};
-use pbgui_messaging::{event::Event, new_event_handler, thread as pbthread, IMsg, OMsg};
+use pbgui_messaging::{
+    client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
+};
 use pbgui_vpin::vpin_dialog;
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow, QPushButton};
 use rustqt_utils::enclose;
 use std::rc::Rc;
-
-pub struct ClientProxy {}
-
-impl ClientProxy {
-    pub fn connect() -> Result<Client, Box<dyn std::error::Error>> {
-        let client = Client::connect(
-            "host=127.0.0.1 user=postgres dbname=packrat password=example port=5432",
-            NoTls,
-        )?;
-        Ok(client)
-    }
-}
 
 fn main() {
     // sender, receiver for communicating from secondary thread to primary ui thread
@@ -76,7 +65,13 @@ fn main() {
         //
         let app_update = new_event_handler(dialog.clone(), receiver);
         let my_conductor = Conductor::<Event>::new(&app_update);
-        pbthread::create(main_ptr, my_conductor, sender, to_thread_receiver)
+        pbthread::create(
+            ConnectParams::default(),
+            main_ptr,
+            my_conductor,
+            sender,
+            to_thread_receiver,
+        )
     })
 }
 
