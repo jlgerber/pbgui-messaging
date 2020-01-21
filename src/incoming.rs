@@ -6,4 +6,5 @@ pub enum IMsg {
     Roles(Vec<String>),
     Sites(Vec<String>),
     Levels(LevelMap),
+    Error(String),
 }

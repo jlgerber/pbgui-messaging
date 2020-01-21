@@ -44,5 +44,12 @@ pub fn new_event_handler<'a>(
                 log::error!("IMsg does not have LevelMap");
             }
         }
+        Event::Error => {
+            if let Ok(IMsg::Error(error)) = receiver.recv() {
+                log::error!("{}", error);
+            } else {
+                log::error!("unable to transmit error");
+            }
+        }
     })
 }

@@ -12,6 +12,7 @@ pub enum Event {
     UpdateRoles,
     UpdateSites,
     UpdateLevels,
+    Error,
 }
 
 /*
@@ -51,6 +52,7 @@ impl ToQString for Event {
             &Event::UpdateRoles => QString::from_std_str("UpdateRoles"),
             &Event::UpdateSites => QString::from_std_str("UpdateSites"),
             &Event::UpdateLevels => QString::from_std_str("UpdateLevels"),
+            &Event::Error => QString::from_std_str("Error"),
         }
     }
 }
@@ -61,6 +63,7 @@ impl FromQString for Event {
             "UpdateRoles" => Event::UpdateRoles,
             "UpdateSites" => Event::UpdateSites,
             "UpdateLevels" => Event::UpdateLevels,
+            "Error" => Event::Error,
             _ => panic!("Unable to convert to Event"),
         }
     }
