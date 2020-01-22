@@ -2,6 +2,7 @@
 pub mod ovpin_dialog;
 pub use ovpin_dialog::OVpinDialog;
 
+///
 pub trait ToOMsg {
     fn to_omsg(self) -> OMsg;
 }

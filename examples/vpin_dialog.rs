@@ -87,6 +87,7 @@ unsafe fn create_dialog<'a, I: Into<String>>(
     dialog.set_default_stylesheet();
     dialog
 }
+
 fn init_dialog(to_thread_sender: Sender<OMsg>) {
     to_thread_sender
         .send(OMsg::VpinDialog(OVpinDialog::GetRoles))

@@ -23,9 +23,11 @@ pub fn new_event_handler<'a>(
     receiver: Receiver<IMsg>,
 ) -> SlotOfQString<'a> {
     SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
+        //
         Event::VpinDialog(vpin_dialog_event) => {
             match_vpin_dialog(vpin_dialog_event, dialog.clone(), &receiver)
         }
+        //
         Event::Error => {
             if let Ok(IMsg::Error(error)) = receiver.recv() {
                 log::error!("{}", error);

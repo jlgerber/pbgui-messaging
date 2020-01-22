@@ -40,7 +40,6 @@ pub(crate) fn match_vpin_dialog(
                     return;
                 }
             };
-            //.expect("unable to get sites from db");
             // we use std::mem::replace because this should be a bit more efficient
             // than clone, and certainly more
             let sites = sites
