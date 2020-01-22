@@ -7,21 +7,12 @@ use qt_core::QString;
 use qt_thread_conductor::traits::*;
 use qt_widgets::cpp_core::{CppBox, Ref};
 
-#[derive(Debug, PartialEq)]
-pub enum VpinDialog {
-    UpdateRoles,
-    UpdateSites,
-    UpdateLevels,
-}
+pub mod vpin_dialog;
+pub use vpin_dialog::VpinDialog;
+
 /// ergonomics related trait. Convert a nested enum to an event
 pub trait ToEvent {
     fn to_event(self) -> Event;
-}
-
-impl ToEvent for VpinDialog {
-    fn to_event(self) -> Event {
-        Event::VpinDialog(self)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -29,60 +20,11 @@ pub enum Event {
     VpinDialog(VpinDialog),
     Error,
 }
-/*
-In order to scale, I want to do something like this:
-
-pub enum VpinDialog {
-    UpdateRoles,
-    UpdateSites,
-    UpdateLevels
-}
-pub enum Event {
-    VpinDialog(VpinDialog)
-}
-
-impl ToQString for Event {
-    match & self {
-        &Event::VpinDialog(VpinDialog::UpdateRoles) => QString::from_std_str("VpinDialog::UpdateRoles"),
-        &Event::VpinDialog(VpinDialog::UpdateSites) => QString::from_std_str("VpinDialog::UpdateSites"),
-        &Event::VpinDialog(VpinDialog::UpdateLevels) => QString::from_std_str("VpinDialog::UpdateLevels"),
-    }
-}
-
-impl FromQString for Event {
-    fn from_qstring(qs: Ref<QString>) -> Self {
-        match qs.to_std_string().as_str() {
-            "VpinDialog::UpdateRoles" => Event::VpinDialog(VpinDialog::UpdateRoles),
-            "VpinDialog::UpdateSites" => Event::VpinDialog(VpinDialog::UpdateSites),
-            "VpinDialog::UpdateLevels" => Event::VpinDialog(VpinDialog::UpdateLevels),
-            _ => panic!("Unable to convert to Event"),
-        }
-    }
-}
-*/
-
-impl ToQString for VpinDialog {
-    fn to_qstring(&self) -> CppBox<QString> {
-        match &self {
-            &VpinDialog::UpdateRoles => QString::from_std_str("VpinDialog::UpdateRoles"),
-            &VpinDialog::UpdateSites => QString::from_std_str("VpinDialog::UpdateSites"),
-            &VpinDialog::UpdateLevels => QString::from_std_str("VpinDialog::UpdateLevels"),
-        }
-    }
-}
 
 impl ToQString for Event {
     fn to_qstring(&self) -> CppBox<QString> {
         match &self {
-            &Event::VpinDialog(VpinDialog::UpdateRoles) => {
-                QString::from_std_str("VpinDialog::UpdateRoles")
-            }
-            &Event::VpinDialog(VpinDialog::UpdateSites) => {
-                QString::from_std_str("VpinDialog::UpdateSites")
-            }
-            &Event::VpinDialog(VpinDialog::UpdateLevels) => {
-                QString::from_std_str("VpinDialog::UpdateLevels")
-            }
+            &Event::VpinDialog(vpin_dialog) => vpin_dialog.to_qstring(),
             &Event::Error => QString::from_std_str("Error"),
         }
     }
@@ -90,12 +32,35 @@ impl ToQString for Event {
 
 impl FromQString for Event {
     fn from_qstring(qs: Ref<QString>) -> Self {
-        match qs.to_std_string().as_str() {
-            "VpinDialog::UpdateRoles" => Event::VpinDialog(VpinDialog::UpdateRoles),
-            "VpinDialog::UpdateSites" => Event::VpinDialog(VpinDialog::UpdateSites),
-            "VpinDialog::UpdateLevels" => Event::VpinDialog(VpinDialog::UpdateLevels),
+        let test_str = qs.to_std_string();
+        match test_str.as_str() {
+            test_str if test_str.starts_with("VpinDialog") => {
+                Event::VpinDialog(VpinDialog::from_qstring(qs))
+            }
             "Error" => Event::Error,
             _ => panic!("Unable to convert to Event"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rustqt_utils::qs;
+
+    #[test]
+    fn can_convert_from_event_to_qstring() {
+        let event = Event::VpinDialog(VpinDialog::UpdateRoles);
+        assert_eq!(
+            event.to_qstring().to_std_string().as_str(),
+            "VpinDialog::UpdateRoles"
+        );
+    }
+    #[test]
+    fn can_convert_from_qstring() {
+        let qstr = qs("VpinDialog::UpdateRoles");
+        let qstr_ref = unsafe { qstr.as_ref() };
+        let event = Event::from_qstring(qstr_ref);
+        assert_eq!(event, Event::VpinDialog(VpinDialog::UpdateRoles));
     }
 }
