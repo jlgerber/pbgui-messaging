@@ -8,13 +8,13 @@ use pbgui_vpin::vpin_dialog::LevelMap;
 /// # Example
 /// In thread, we send messages to the ui thread using an mpsc::channel .
 /// The call would look like this without the trait:
-/// ```
+/// ```ignore
 /// sender
 ///   .send(IMsg::VpinDialog(IVPinDialog::Roles(roles)))
 ///   .expect("bla bla bla");
 /// ```
 /// With the trait, it can be simplified somewhat to this:
-/// ```
+/// ```ignore
 ///  sender
 ///    .send(IVpinDialog::Roles(roles).to_imsg())
 ///    .expect("unable to send roles");

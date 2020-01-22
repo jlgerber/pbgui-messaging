@@ -34,6 +34,7 @@ impl FromQString for Event {
     fn from_qstring(qs: Ref<QString>) -> Self {
         let test_str = qs.to_std_string();
         match test_str.as_str() {
+            // delegate the work to the appropriate module
             test_str if test_str.starts_with("VpinDialog") => {
                 Event::VpinDialog(VpinDialog::from_qstring(qs))
             }
