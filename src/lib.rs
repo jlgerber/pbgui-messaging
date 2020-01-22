@@ -1,7 +1,7 @@
 pub mod incoming;
-pub use incoming::{IMsg, IVpinDialog, ToIMsg};
+pub use incoming::{IMsg, IPackagesTree, IVpinDialog, ToIMsg};
 pub mod outgoing;
-pub use outgoing::{OMsg, OVpinDialog, ToOMsg};
+pub use outgoing::{OMsg, OPackagesTree, OVpinDialog, ToOMsg};
 pub mod event;
 pub use event::{Event, ToEvent, VpinDialog};
 pub mod event_handler;

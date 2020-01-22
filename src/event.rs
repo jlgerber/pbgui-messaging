@@ -10,6 +10,9 @@ use qt_widgets::cpp_core::{CppBox, Ref};
 pub mod vpin_dialog;
 pub use vpin_dialog::VpinDialog;
 
+pub mod packages_tree;
+pub use packages_tree::PackagesTree;
+
 /// ergonomics related trait. Convert a nested enum to an event
 pub trait ToEvent {
     fn to_event(self) -> Event;
@@ -18,6 +21,7 @@ pub trait ToEvent {
 #[derive(Debug, PartialEq)]
 pub enum Event {
     VpinDialog(VpinDialog),
+    PackagesTree(PackagesTree),
     Error,
 }
 
@@ -25,6 +29,7 @@ impl ToQString for Event {
     fn to_qstring(&self) -> CppBox<QString> {
         match &self {
             &Event::VpinDialog(vpin_dialog) => vpin_dialog.to_qstring(),
+            &Event::PackagesTree(packages_tree) => packages_tree.to_qstring(),
             &Event::Error => QString::from_std_str("Error"),
         }
     }
@@ -35,8 +40,11 @@ impl FromQString for Event {
         let test_str = qs.to_std_string();
         match test_str.as_str() {
             // delegate the work to the appropriate module
-            test_str if test_str.starts_with("VpinDialog") => {
+            test_str if test_str.starts_with("VpinDialog::") => {
                 Event::VpinDialog(VpinDialog::from_qstring(qs))
+            }
+            test_str if test_str.starts_with("PackagesTree::") => {
+                Event::PackagesTree(PackagesTree::from_qstring(qs))
             }
             "Error" => Event::Error,
             _ => panic!("Unable to convert to Event"),

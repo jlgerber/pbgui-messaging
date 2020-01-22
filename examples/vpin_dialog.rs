@@ -4,11 +4,14 @@ use pbgui_messaging::{
     client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
     OVpinDialog,
 };
+use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
-use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow, QPushButton};
+use qt_widgets::{cpp_core::MutPtr, QApplication, QFrame, QMainWindow, QPushButton};
 use rustqt_utils::enclose;
+use rustqt_utils::{create_vlayout, qs};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 fn main() {
@@ -23,9 +26,19 @@ fn main() {
     QApplication::init(|app| unsafe {
         let mut main = QMainWindow::new_0a();
         let main_ptr = main.as_mut_ptr();
-        let mut button = QPushButton::new();
+        let mut myframe = QFrame::new_0a();
+        let mut myframe_ptr = myframe.as_mut_ptr();
+
+        main.set_central_widget(myframe.into_ptr());
+        let mut vlayout = create_vlayout();
+        let mut vlayout_ptr = vlayout.as_mut_ptr();
+        myframe_ptr.set_layout(vlayout_ptr);
+        let mut button = QPushButton::from_q_string(&qs("Press Me"));
         let button_ptr = button.as_mut_ptr();
-        main.set_central_widget(button.into_ptr());
+        vlayout_ptr.add_widget(button.into_ptr());
+        let treeview = Rc::new(RefCell::new(tree::DistributionTreeView::create(
+            myframe_ptr,
+        )));
         // wire up message to terminate secondary thread
         let _quit_slot = pbthread::create_quit_slot(to_thread_sender_quit, app.clone());
 
@@ -66,7 +79,7 @@ fn main() {
         //
         // This Slot handles processessing incoming Events and Messages
         //
-        let app_update = new_event_handler(dialog.clone(), receiver);
+        let app_update = new_event_handler(dialog.clone(), treeview.clone(), receiver);
         let my_conductor = Conductor::<Event>::new(&app_update);
         pbthread::create(
             ConnectParams::default(),

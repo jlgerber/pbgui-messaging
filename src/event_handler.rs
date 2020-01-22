@@ -1,14 +1,17 @@
 use crate::{prelude::*, Event, IMsg, IVpinDialog, VpinDialog};
 use crossbeam_channel::Receiver;
 use log;
+use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
 use qt_core::{QString, SlotOfQString};
 use qt_widgets::cpp_core::Ref;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub mod vpin_dialog_eh;
 use vpin_dialog_eh::match_vpin_dialog;
-
+pub mod packages_tree_eh;
+use packages_tree_eh::match_packages_tree;
 /// Generate a new event handler, which is of type `SlotOfQString`.
 /// The event handler is responsible for handling Signals of type Event
 ///
@@ -20,12 +23,16 @@ use vpin_dialog_eh::match_vpin_dialog;
 /// * Slot which processes messages from the non-ui thread and updates the ui in response
 pub fn new_event_handler<'a>(
     dialog: Rc<vpin_dialog::VpinDialog<'a>>,
+    tree: Rc<RefCell<tree::DistributionTreeView<'a>>>,
     receiver: Receiver<IMsg>,
 ) -> SlotOfQString<'a> {
     SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
         //
         Event::VpinDialog(vpin_dialog_event) => {
             match_vpin_dialog(vpin_dialog_event, dialog.clone(), &receiver)
+        }
+        Event::PackagesTree(packages_tree_event) => {
+            match_packages_tree(packages_tree_event, tree.clone(), &receiver)
         }
         //
         Event::Error => {
