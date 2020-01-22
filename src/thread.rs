@@ -52,6 +52,7 @@ pub fn create(
                 }
             };
             let mut db = PackratDb::new(client);
+            //let mut show: Option<String> = None;
             loop {
                 let msg = receiver.recv().expect("Unable to unwrap received msg");
                 match msg {
@@ -60,7 +61,8 @@ pub fn create(
                     }
                     OMsg::Quit => {
                         log::info!("From secondary thread. Quitting after receiving OMsg::Quit");
-                        return;
+                        // try break instead of return
+                        break;
                     }
                 }
             }

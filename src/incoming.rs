@@ -2,6 +2,22 @@
 //! to the application
 use pbgui_vpin::vpin_dialog::LevelMap;
 
+/// ToIMsg trait should be implemented by the nested incoming message
+/// enums. The trait is used to reduce the visual noise when dealing with IMsg
+///
+/// # Example
+/// In thread, we send messages to the ui thread using an mpsc::channel .
+/// The call would look like this without the trait:
+/// ```
+/// sender
+///   .send(IMsg::VpinDialog(IVPinDialog::Roles(roles)))
+///   .expect("bla bla bla");
+/// ```
+/// With the trait, it can be simplified somewhat to this:
+/// ```
+///  sender
+///    .send(IVpinDialog::Roles(roles).to_imsg())
+///    .expect("unable to send roles");
 pub trait ToIMsg {
     fn to_imsg(self) -> IMsg;
 }
