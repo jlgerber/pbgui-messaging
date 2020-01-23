@@ -1,6 +1,7 @@
 use crate::{prelude::*, Event, IMsg, IVpinDialog, VpinDialog};
 use crossbeam_channel::Receiver;
 use log;
+use pbgui_toolbar::toolbar::MainToolbar;
 use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
 use pbgui_withs::WithsList;
@@ -11,8 +12,10 @@ use std::rc::Rc;
 
 pub mod vpin_dialog_eh;
 use vpin_dialog_eh::match_vpin_dialog;
+pub mod main_toolbar_eh;
 pub mod package_withs_eh;
 pub mod packages_tree_eh;
+use main_toolbar_eh::match_main_toolbar;
 use package_withs_eh::match_package_withs;
 use packages_tree_eh::match_packages_tree;
 /// Generate a new event handler, which is of type `SlotOfQString`.
@@ -28,6 +31,7 @@ pub fn new_event_handler<'a>(
     dialog: Rc<vpin_dialog::VpinDialog<'a>>,
     tree: Rc<RefCell<tree::DistributionTreeView<'a>>>,
     withs: Rc<RefCell<WithsList<'a>>>,
+    main_toolbar: Rc<MainToolbar>,
     receiver: Receiver<IMsg>,
 ) -> SlotOfQString<'a> {
     SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
@@ -40,6 +44,9 @@ pub fn new_event_handler<'a>(
         }
         Event::PackageWiths(package_withs_event) => {
             match_package_withs(package_withs_event, withs.clone(), &receiver)
+        }
+        Event::MainToolbar(main_toolbar_event) => {
+            match_main_toolbar(main_toolbar_event, main_toolbar.clone(), &receiver)
         }
         //
         Event::Error => {

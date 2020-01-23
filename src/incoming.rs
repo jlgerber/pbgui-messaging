@@ -26,6 +26,7 @@ pub enum IMsg {
     VpinDialog(IVpinDialog),
     PackagesTree(IPackagesTree),
     PackageWiths(IPackageWiths),
+    MainToolbar(IMainToolbar),
     Error(String),
 }
 
@@ -37,3 +38,6 @@ pub use ipackages_tree::IPackagesTree;
 
 pub mod ipackage_withs;
 pub use ipackage_withs::IPackageWiths;
+
+pub mod imain_toolbar;
+pub use imain_toolbar::IMainToolbar;

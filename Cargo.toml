@@ -1,6 +1,6 @@
 [package]
 name = "pbgui-messaging"
-version = "0.10.1"
+version = "0.11.0"
 authors = ["jlgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
@@ -19,7 +19,7 @@ qt_ui_tools = "~0.4.1"
 pbgui-vpin = {git="https://github.com/jlgerber/pbgui-vpin", tag="v0.8.0"}
 pbgui-tree = {git="https://github.com/jlgerber/pbgui-tree", tag="v0.11.1"}
 pbgui-withs = {git="https://github.com/jlgerber/pbgui-withs", tag="v0.18.0"}
-
+pbgui-toolbar = {git="https://github.com/jlgerber/pbgui-toolbar", tag="v0.8.0"}
 env_logger = "0.7.1"
 
 [dev-dependencies]

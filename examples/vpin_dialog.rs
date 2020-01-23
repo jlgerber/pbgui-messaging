@@ -4,9 +4,11 @@ use pbgui_messaging::init;
 use pbgui_messaging::{
     client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
 };
+use pbgui_toolbar::toolbar;
 use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
 use pbgui_withs::{WithsList, WithsListConfig};
+
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::{cpp_core::MutPtr, QApplication, QFrame, QMainWindow, QPushButton};
@@ -26,7 +28,7 @@ fn main() {
 
     QApplication::init(|app| unsafe {
         let mut main = QMainWindow::new_0a();
-        let main_ptr = main.as_mut_ptr();
+        let mut main_ptr = main.as_mut_ptr();
         let mut myframe = QFrame::new_0a();
         let mut myframe_ptr = myframe.as_mut_ptr();
 
@@ -37,6 +39,8 @@ fn main() {
         let mut button = QPushButton::from_q_string(&qs("Press Me"));
         let button_ptr = button.as_mut_ptr();
         vlayout_ptr.add_widget(button.into_ptr());
+        let toolbar = Rc::new(toolbar::create(main_ptr));
+        init::main_toolbar::init(to_thread_sender.clone());
         let treeview = Rc::new(RefCell::new(tree::DistributionTreeView::create(
             myframe_ptr,
         )));
@@ -90,6 +94,7 @@ fn main() {
             dialog.clone(),
             treeview.clone(),
             withs_list.clone(),
+            toolbar.clone(),
             receiver,
         );
         let my_conductor = Conductor::<Event>::new(&app_update);
