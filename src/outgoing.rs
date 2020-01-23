@@ -3,6 +3,9 @@ pub mod ovpin_dialog;
 pub use ovpin_dialog::OVpinDialog;
 pub mod opackages_tree;
 pub use opackages_tree::OPackagesTree;
+pub mod opackage_withs;
+pub use opackage_withs::OPackageWiths;
+
 ///
 pub trait ToOMsg {
     fn to_omsg(self) -> OMsg;
@@ -12,5 +15,6 @@ pub trait ToOMsg {
 pub enum OMsg {
     VpinDialog(OVpinDialog),
     PackagesTree(OPackagesTree),
+    PackageWiths(OPackageWiths),
     Quit,
 }

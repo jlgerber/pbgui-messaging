@@ -6,6 +6,7 @@ use pbgui_messaging::{
 };
 use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
+use pbgui_withs::{WithsList, WithsListConfig};
 use qt_core::Slot;
 use qt_thread_conductor::conductor::Conductor;
 use qt_widgets::{cpp_core::MutPtr, QApplication, QFrame, QMainWindow, QPushButton};
@@ -40,6 +41,11 @@ fn main() {
             myframe_ptr,
         )));
         init::packages_tree::init(to_thread_sender.clone());
+        let withs_list = Rc::new(RefCell::new(WithsList::new(
+            myframe_ptr,
+            WithsListConfig::default(),
+        )));
+        init::package_withs::init(to_thread_sender.clone());
         // wire up message to terminate secondary thread
         let _quit_slot = pbthread::create_quit_slot(to_thread_sender_quit, app.clone());
 
@@ -80,7 +86,12 @@ fn main() {
         //
         // This Slot handles processessing incoming Events and Messages
         //
-        let app_update = new_event_handler(dialog.clone(), treeview.clone(), receiver);
+        let app_update = new_event_handler(
+            dialog.clone(),
+            treeview.clone(),
+            withs_list.clone(),
+            receiver,
+        );
         let my_conductor = Conductor::<Event>::new(&app_update);
         pbthread::create(
             ConnectParams::default(),

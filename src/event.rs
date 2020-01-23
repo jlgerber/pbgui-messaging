@@ -13,6 +13,8 @@ pub use vpin_dialog::VpinDialog;
 pub mod packages_tree;
 pub use packages_tree::PackagesTree;
 
+pub mod package_withs;
+pub use package_withs::PackageWiths;
 /// ergonomics related trait. Convert a nested enum to an event
 pub trait ToEvent {
     fn to_event(self) -> Event;
@@ -22,6 +24,7 @@ pub trait ToEvent {
 pub enum Event {
     VpinDialog(VpinDialog),
     PackagesTree(PackagesTree),
+    PackageWiths(PackageWiths),
     Error,
 }
 
@@ -30,6 +33,7 @@ impl ToQString for Event {
         match &self {
             &Event::VpinDialog(vpin_dialog) => vpin_dialog.to_qstring(),
             &Event::PackagesTree(packages_tree) => packages_tree.to_qstring(),
+            &Event::PackageWiths(package_withs) => package_withs.to_qstring(),
             &Event::Error => QString::from_std_str("Error"),
         }
     }
@@ -45,6 +49,9 @@ impl FromQString for Event {
             }
             test_str if test_str.starts_with("PackagesTree::") => {
                 Event::PackagesTree(PackagesTree::from_qstring(qs))
+            }
+            test_str if test_str.starts_with("PackageWiths::") => {
+                Event::PackageWiths(PackageWiths::from_qstring(qs))
             }
             "Error" => Event::Error,
             _ => panic!("Unable to convert to Event"),

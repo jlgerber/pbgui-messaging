@@ -25,6 +25,7 @@ pub trait ToIMsg {
 pub enum IMsg {
     VpinDialog(IVpinDialog),
     PackagesTree(IPackagesTree),
+    PackageWiths(IPackageWiths),
     Error(String),
 }
 
@@ -33,3 +34,6 @@ pub use ivpin_dialog::IVpinDialog;
 
 pub mod ipackages_tree;
 pub use ipackages_tree::IPackagesTree;
+
+pub mod ipackage_withs;
+pub use ipackage_withs::IPackageWiths;

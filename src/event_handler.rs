@@ -3,6 +3,7 @@ use crossbeam_channel::Receiver;
 use log;
 use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
+use pbgui_withs::WithsList;
 use qt_core::{QString, SlotOfQString};
 use qt_widgets::cpp_core::Ref;
 use std::cell::RefCell;
@@ -10,7 +11,9 @@ use std::rc::Rc;
 
 pub mod vpin_dialog_eh;
 use vpin_dialog_eh::match_vpin_dialog;
+pub mod package_withs_eh;
 pub mod packages_tree_eh;
+use package_withs_eh::match_package_withs;
 use packages_tree_eh::match_packages_tree;
 /// Generate a new event handler, which is of type `SlotOfQString`.
 /// The event handler is responsible for handling Signals of type Event
@@ -24,6 +27,7 @@ use packages_tree_eh::match_packages_tree;
 pub fn new_event_handler<'a>(
     dialog: Rc<vpin_dialog::VpinDialog<'a>>,
     tree: Rc<RefCell<tree::DistributionTreeView<'a>>>,
+    withs: Rc<RefCell<WithsList<'a>>>,
     receiver: Receiver<IMsg>,
 ) -> SlotOfQString<'a> {
     SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
@@ -33,6 +37,9 @@ pub fn new_event_handler<'a>(
         }
         Event::PackagesTree(packages_tree_event) => {
             match_packages_tree(packages_tree_event, tree.clone(), &receiver)
+        }
+        Event::PackageWiths(package_withs_event) => {
+            match_package_withs(package_withs_event, withs.clone(), &receiver)
         }
         //
         Event::Error => {

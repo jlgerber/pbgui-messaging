@@ -1,9 +1,9 @@
 //! handle queries in a separate thread
 use crate::{
     client_proxy::{ClientProxy, ConnectParams},
-    event::PackagesTree,
-    incoming::IPackagesTree,
-    outgoing::OPackagesTree,
+    event::{PackageWiths, PackagesTree},
+    incoming::{IPackageWiths, IPackagesTree},
+    outgoing::{OPackageWiths, OPackagesTree},
     Event, IMsg, IVpinDialog, OMsg, OVpinDialog, ToEvent, ToIMsg, VpinDialog,
 };
 use crossbeam_channel::{Receiver, Sender};
@@ -19,8 +19,11 @@ use qt_widgets::{cpp_core::MutPtr, QApplication, QMainWindow};
 pub mod vpin_dialog;
 use vpin_dialog::match_vpin_dialog;
 
+pub mod package_withs;
 pub mod packages_tree;
+use package_withs::match_package_withs;
 use packages_tree::match_packages_tree;
+
 /// Create the thread that handles requests for data from the ui. The thread
 /// receives messages via the `receiver`, matches against them, and sends data
 /// back to the UI via the `sender`. Finally, triggering an appropriate update
@@ -66,6 +69,9 @@ pub fn create(
                     }
                     OMsg::PackagesTree(msg) => {
                         match_packages_tree(msg, &mut db, &mut conductor, &sender);
+                    }
+                    OMsg::PackageWiths(msg) => {
+                        match_package_withs(msg, &mut db, &mut conductor, &sender);
                     }
                     OMsg::Quit => {
                         log::info!("From secondary thread. Quitting after receiving OMsg::Quit");
