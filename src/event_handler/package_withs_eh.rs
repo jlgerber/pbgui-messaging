@@ -13,7 +13,7 @@ pub fn match_package_withs<'a>(
         PackageWiths::GetPackages => {
             if let Ok(IMsg::PackageWiths(IPackageWiths::Packages(packages))) = receiver.recv() {
                 let packages_ref = packages.iter().map(|x| x.as_str()).collect::<Vec<_>>();
-                withs.borrow().set_items(packages_ref);
+                withs.borrow().set_cb_items(packages_ref);
             } else {
                 log::error!("PackagesTree::GetPackages IMsg does not match event state");
             }
