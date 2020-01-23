@@ -2,7 +2,7 @@ use crossbeam_channel::{unbounded as channel, Receiver, Sender};
 use env_logger::Env;
 use pbgui_messaging::{
     client_proxy::ConnectParams, event::Event, new_event_handler, thread as pbthread, IMsg, OMsg,
-    OVpinDialog,
+    OPackagesTree, OVpinDialog,
 };
 use pbgui_tree::tree;
 use pbgui_vpin::vpin_dialog;
@@ -39,6 +39,7 @@ fn main() {
         let treeview = Rc::new(RefCell::new(tree::DistributionTreeView::create(
             myframe_ptr,
         )));
+        init_tree(to_thread_sender.clone());
         // wire up message to terminate secondary thread
         let _quit_slot = pbthread::create_quit_slot(to_thread_sender_quit, app.clone());
 
@@ -113,4 +114,13 @@ fn init_dialog(to_thread_sender: Sender<OMsg>) {
             "dev02".to_string(),
         )))
         .expect("unable to get levels");
+}
+
+fn init_tree(to_thread_sender: Sender<OMsg>) {
+    to_thread_sender
+        .send(OMsg::PackagesTree(OPackagesTree::GetPackages))
+        .expect("unable to get packages");
+    to_thread_sender
+        .send(OMsg::PackagesTree(OPackagesTree::GetSites))
+        .expect("unable to get sites");
 }
